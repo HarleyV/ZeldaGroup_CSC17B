@@ -1,34 +1,19 @@
-// Basic button input bools
-// true -> pressed
-var input = {
-    left: false,
-    right: false,
-    up: false,
-    down: false,
-    attack: false,
-    run: false };
+var lastTime; // Used to calculate deltaTime
 
-// Previous state of input
-var pInput = {
-    left: false,
-    right: false,
-    up: false,
-    down: false,
-    attack: false,
-    run: false };
+var objs = []; // List of all GameObjects
+var delList = [];
 
-var lastTime;
+var scaleFact; // Amount to scale
 
-var objs = [];
+var colBoxes = false;
 
 // Calculate the scaling factor
-var scaleFact;
-
 function calcScaling() {
     var oldFact = scaleFact; // Save the scale factor before we change it
     var min; // The smaller viewport dimension in px
     var des; // "desired" viewport dimension in px
 
+    viewport = new Vector2(window.innerWidth, window.innerHeight);
     // Find the right values
     if (window.innerWidth <= window.innerHeight) {
         min = window.innerWidth;
@@ -47,103 +32,161 @@ function calcScaling() {
     // if the factor changed, resize all elements
     if (scaleFact !== oldFact) {
         // Resize the elements
-        console.log(scaleFact);
+        //console.log(scaleFact);
+
+		// Resize the map
+		var cont = document.getElementById('map');
+		cont.style.height = mapArray.length * 16 * scaleFact + "px";
+		cont.style.width = mapArray[0].length * 16 * scaleFact + "px";
+
+		for (var i = 0; i < tiles.length; i++) {
+			tiles[i].elem.style.width = scaleFact * 16 + "px";
+			tiles[i].elem.style.height = scaleFact * 16 + "px";
+			tiles[i].elem.style.backgroundSize = scaleFact * 16 * 16 + "px " + scaleFact * 16 * 16 + "px";
+			tiles[i].elem.style.backgroundPosition = scaleFact * 16 * tiles[i].offX + "px " + scaleFact * 16 * tiles[i].offY + "px";
+		}
+
+		for (var i = 0; i < objs.length; i++) {
+            objs[i].elem.style.width = scaleFact * objs[i].spriteSize.x + "px";
+            objs[i].elem.style.height = scaleFact * objs[i].spriteSize.y + "px";
+            objs[i].resize();
+		}
         if (player) {
-            // TODO: Once anim system has been implemented we'll use
-            // the cell dimensions and sheet dimensions instead of constants
-            player.elem.style.width = scaleFact * 16 + "px";
-            player.elem.style.height = scaleFact * 16 + "px";
-            player.elem.style.backgroundSize = scaleFact * 113 + "px " + scaleFact * 184 + "px";
+            player.resize();
+            player.elem.style.width = scaleFact * player.spriteSize.x + "px";
+            player.elem.style.height = scaleFact * player.spriteSize.y + "px";
+            player.elem.style.backgroundSize = scaleFact * player.animator.sheet.x + "px " + scaleFact * player.animator.sheet.y + "px";
         }
     }
 }
 
-window.onload = calcScaling;
+window.onload = function () {
+	calcScaling();
+	entMain(0);
+	dungeon.musicPlay()
+}
 
 window.onresize = calcScaling;
 
-
-// Basic event listereners to update the corresponding value in 'input'
-// This way 'input' will always contain the state of each button.
-// http://keycode.info/ to get keycodes
-document.addEventListener('keydown', function(event) {
-    if(event.keyCode == 37) {
-         input.left = true;
-    } else if(event.keyCode == 39) {
-         input.right = true;
-    } else if(event.keyCode == 40) {
-         input.down = true;
-    } else if(event.keyCode == 38) {
-         input.up = true;
-    } else if(event.keyCode == 32) {
-         input.attack = true;
-    } else if(event.keyCode == 16) {
-         input.run = true;
-    }
-});
-
-document.addEventListener('keyup', function(event) {
-    if(event.keyCode == 37) {
-         input.left = false;
-    } else if(event.keyCode == 39) {
-         input.right = false;
-    } else if(event.keyCode == 40) {
-         input.down = false;
-    } else if(event.keyCode == 38) {
-         input.up = false;
-    } else if(event.keyCode == 32) {
-         input.attack = false;
-    } else if(event.keyCode == 16) {
-         input.run = false;
-    }
-});
-
 // Instance the player
-scaleFact = 4;
 var player = new Player("Player");
+objs.push(player);
 
-var obj1 = new GameObject("one");
-obj1.size = new Vector2(10, 10);
-obj1.position = new Vector2(30, 30);
-document.body.appendChild(obj1.elem);
-obj1.elem.style.backgroundColor = "blue";
-obj1.elem.style.width = (obj1.size.x * scaleFact) + "px";
-obj1.elem.style.height = (obj1.size.y * scaleFact) + "px";
-
-var obj2 = new GameObject("two");
-obj2.size = new Vector2(10, 10);
-obj2.position = new Vector2(30, 90);
-obj2.velocity = new Vector2(5, -140);
-document.body.appendChild(obj2.elem);
-obj2.elem.style.backgroundColor = "red";
-obj2.elem.style.width = obj2.size.x * scaleFact + "px";
-obj2.elem.style.height = obj2.size.y * scaleFact + "px";
+// Camera position
+var camPos = new Vector2(0, 0);
 
 
-objs.push(obj1);
-objs.push(obj2);
+function delObject(obj) {
+	if (obj.active) {
+		obj.active = false;
+		delList.push(obj);
+	}
+}
 
-// Since none of the code generates HTML yet we
-// just get the preextisting html object
-player.elem = document.getElementById("player");
+function cullObjects() {
+	for (var i = 0; i < delList.length; i++) {
+		document.body.removeChild(delList[i].elem);
+
+		if (colBoxes) {
+			document.body.removeChild(delList[i].box);
+		}
+
+		objs.splice(objs.indexOf(delList[i]), 1);
+		//console.log("object deleted");
+	}
+	
+	// Clear the list
+	delList = [];
+}
 
 // All game logic, physics, input, ai, etc
 function update(deltaTime) {
-
-    player.update(deltaTime);
-
     for (i = 0; i < objs.length; i++) {
         objs[i].update(deltaTime);
     }
 
-	/*
+	cullObjects();
+	
+    // Physics
+    var dt = deltaTime;
 	for (i = 0; i < objs.length; i++) {
-        //objs[i].p(deltaTime);
-    }*/
 
-	phys(obj2, obj1, deltaTime);
+        if (objs[i].canCollide == false) {
+            for (j = 0; j < objs.length; j++) {
+                if (i != j) {
+                    if (collides(objs[i], objs[j])) {
+                        objs[i].collide(objs[j]);
+                        objs[j].collide(objs[i]);
+                    }
+                }
+            }
+        } else if (objs[i].velocity.x != 0 || objs[i].velocity.y != 0){
+
+            var t = {t:-1, ax: false};
+            var hit;
+            for (j = 0; j < objs.length; j++) {
+                if (i != j && objs[j].canCollide == true) {
+                    var _t = phys(objs[i], objs[j], dt);
+                    if (_t.t >= 0 && (_t.t < t.t || t.t < 0)) {
+                        t = _t;
+                        hit = objs[j];
+                    }
+                }
+            }
+
+            for (var j = 0; j < collisionMap.length; j++) {
+                for (var k = 0; k < collisionMap[j].length; k++) {
+                    if (collisionMap[j][k] == true) {
+                        // Create a spoof gameobject for the phys function
+                        var temp = {position: new Vector2(k * 16, j * 16), size: new Vector2(16,16)};
+                        var _t = phys(objs[i], temp, dt);
+                        if (_t.t >= 0 && (_t.t < t.t || t.t < 0)) {
+                            t = _t;
+                            hit = null;
+                        }
+                    }
+                }
+            }
+
+            var mag = objs[i].velocity.magnitude();
+            if (t.t >= 0 && mag > 0) {
+                var dir = objs[i].velocity.normalize();
+
+                objs[i].position = objs[i].position.add(dir.mul(t.t));
+
+                // Check the axis the collision happened on
+                if (t.ax) {
+                    objs[i].velocity.y = 0;
+                } else {
+
+                    objs[i].velocity.x = 0;
+                    //objs[i].velocity.y = 100;// objs[i].velocity.y * (1- Math.abs(dir.y));
+                }
+
+                // If collision was with another obj, call the collide function
+				objs[i].collide(hit);
+                if (hit != null) {
+                    hit.collide(objs[i]);
+                }
 
 
+                // Basically repeat collision for this obj until dt <= 0
+                dt -= dt * (t.t/mag);
+                if (dt > 0) {
+                    i--;
+                    continue;
+                }
+
+            } else {
+                //if (mag > 0) console.log("no t + " + t.t);
+                objs[i].position = objs[i].position.add(objs[i].velocity.mul(dt));
+            }
+        }
+        dt = deltaTime;
+    }
+
+	cullObjects();
+	
     pInput = Object.assign(pInput, input);
 }
 
@@ -151,13 +194,36 @@ function draw(deltaTime) {
 	for (i = 0; i < objs.length; i++) {
 		objs[i].draw(deltaTime);
 	}
+  //camPos = new Vector2(player.position.x - viewport.x / (2 * scaleFact), player.position.y - viewport.y / (2 * scaleFact));
 
+  if (player.position.x < camPos.x + viewport.x / (3 * scaleFact)) {
+    camPos.x = player.position.x - viewport.x / (3 * scaleFact);
+  }
+
+  if (player.position.x > camPos.x + 2 * viewport.x / (3 * scaleFact)) {
+    camPos.x = player.position.x - 2 * viewport.x / (3 * scaleFact);
+  }
+
+  if (player.position.y < camPos.y + viewport.y / (3 * scaleFact)) {
+    camPos.y = player.position.y - viewport.y / (3 * scaleFact);
+  }
+
+  if (player.position.y > camPos.y + 2 * viewport.y / (3 * scaleFact)) {
+    camPos.y = player.position.y - 2 * viewport.y / (3 * scaleFact);
+  }
 
      // Will also need to handle a moving camera
 	player.draw(deltaTime);
 
+  var cont = document.getElementById('map');
+
+
+  cont.style.left = -camPos.x * scaleFact + "px";
+  cont.style.top = -camPos.y * scaleFact + "px";
+
     // TODO: Map drawing
 }
+var slow = false;
 
 // Main loop function
 // Called as often as it can be
@@ -174,10 +240,11 @@ function loop() {
     }
     lastTime = Date.now();
 
+    if (slow == true) deltaTime /= 58;
+
     // Get the fps, just cause
     var fps = 1 / deltaTime;
-    if (fps < 50) console.log("Stutter " + deltaTime * 1000 + " ms");
-
+    //if (fps < 40) console.log("Stutter " + deltaTime * 1000 + " ms " + fps + " fps");
 
     // Call the update function, all game logic, physics, input, ai, etc
     update(deltaTime);
@@ -188,7 +255,6 @@ function loop() {
 
     // Let the browser update and then recall the loop function
     requestAnimationFrame(loop);
-
 }
 
 // Jump into the loop, start the game

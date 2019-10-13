@@ -1,17 +1,46 @@
 <!DOCTYPE html>
 <head>
 	<link href="stylesheet.css" rel="stylesheet">
+	
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="css/styles.css" />
+	<script src='js/LifeBar.js' type='text/javascript'></script>
+    <script src='js/Heart.js' type='text/javascript'></script>
+    <script src='js/ItemBar.js' type='text/javascript'></script>
+    <script src='js/Item.js' type='text/javascript'></script>
+    <script src='js/ItemHUD.js' type='text/javascript'></script>
+    <script src='js/HUDItem.js' type='text/javascript'></script>
 </head>
-<body style="margin:0">
+<body style="margin:0; background:black;">
+
+	<div id='main'></div><!-- JavaScript starts here -->
+	<!-- jQuery CDN -->
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <!-- Main js script -->
+    <script src='js/index.js' type='text/javascript'></script>
+	<!-- Bootstrap JS CDN -->
+	<script src='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js'></script>
+
 	<div id="map">
 		<!-- All the tile elements here -->
 	</div>
-     <div id="player"></div>
      <!-- Doesn't work right now if I load the scripts before the player div
           Later we'll move it in the head -->
+		  
+		  
+     <script type="text/javascript" src="audio.js"></script>
+     <script type="text/javascript" src="music.js"></script>
      <script type="text/javascript" src="Vector2.js"></script>
      <script type="text/javascript" src="GameObject.js"></script>
+     <script type="text/javascript" src="DmgBox.js"></script>
+     <script type="text/javascript" src="Animator.js"></script>
+     <script type="text/javascript" src="AnBox.js"></script>
      <script type="text/javascript" src="Player.js"></script>
+     <script type="text/javascript" src="Goblin.js"></script>
+     <script type="text/javascript" src="Inventory.js"></script>
      <script type="text/javascript" src="Physics.js"></script>
+     <script type="text/javascript" src="Input.js"></script>
+     <script type="text/javascript" src="Map.js"></script>
+     <script type="text/javascript" src="Rooms.js"></script>
      <script type="text/javascript" src="Game.js"></script>
 </body>

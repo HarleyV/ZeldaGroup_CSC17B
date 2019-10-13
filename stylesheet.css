@@ -6,32 +6,29 @@
 	position: fixed;
 }
 
-#player {
-	background-image: url("https://gamingreinvented.com/wp-content/uploads/2015/11/zelda1link.png");
-	background-repeat: no-repeat;
-	/* This parts a little wierd,
-	   it scales the image up so that each "tile" will fill the image container
-	   I.E. width / tileWidth * 100
-		    In thise instance:
-			16 / 113 * 100 = 706.25
-	   Same applies to height
-	   */
-	background-size: 706.25% 1150%;
+.colBox {
 	display: block;
-	width: 20vmin;
-	height: 20vmin;
-	image-rendering: pixelated;
 	position: fixed;
+    border: 1px solid blue;
+    z-index: 10;
 }
 
-/* Flip horizontally
-   Literally just flips the image horizontally
-*/
-.flipH {
-	-moz-transform: scaleX(-1);
-	-o-transform: scaleX(-1);
-	-webkit-transform: scaleX(-1);
-	transform: scaleX(-1);
-	filter: FlipH;
-	-ms-filter: "FlipH";
+body {
+	overflow: hidden;
+}
+
+
+.damaged {
+    filter: grayscale(100%) sepia(100%) hue-rotate(315deg) saturate(700%) brightness(80%);
+}
+
+#map{
+	position: absolute;
+}
+
+.tile{
+	image-rendering: pixelated;
+	position: relative;
+	float: left;
+	background-image: url(tilesheet.gif);
 }
